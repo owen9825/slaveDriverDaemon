@@ -6,7 +6,6 @@ import pandas
 import csv
 from fuzzywuzzy import process
 import argparse
-import randomapi # prove that the master didn't bias the choices.
 import json
 import numpy as np
 import math
@@ -29,6 +28,8 @@ def allocateChores(history, chores, slaves):
     slaves[u"Chores"] = "; "; # make it easy to strip later
 
     randomBlock = np.random.random_sample(size=len(chores));
+    # to do: scrape Lotto results to prove that this program wasn't run repeatedly until a
+    # beneficial result for the master was generated
     b = 0; # place in block
 
     slaves.set_index(u"Email", inplace=True); # allow this to be used as a key
@@ -103,11 +104,10 @@ def sendChores(chores, master, randomBlock):
         outFile.close();
     # to do: send the email
 
-
 # to do: merge gatherSlaves and getChores into the same function with an input list
 # of expected columns and unique columns
-""" Get slaves from a csv file, return as df """
-def gatherSlaves(csvFilename):
+""" Read a csv that's at least similar to expected """
+def fuzzyRead(csvFilename, expectedHeaders):
     try:
         rawFile = codecs.open(csvFilename, encoding='utf-8', mode='r');
     except IOError:
@@ -120,70 +120,17 @@ def gatherSlaves(csvFilename):
         df = pandas.read_csv(rawFile);
         rawFile.close();
         headers = list(df.columns);
-        assert(headers is not None and len(headers) >= 3);
+        assert(headers is not None and len(headers) >= len(expectedHeaders));
 
-        nameCol, nameScore = process.extractOne("Name", headers);
-        assert(nameScore >= 70); # assert that there's a column for the slaves' names
-        nameCol = headers.index(nameCol);
-        assert(np.sum(headers == u"Name") <= 1);
-        headers[nameCol] = "Name"; # apply our naming for ease of processing later
-        emailCol, emailScore = process.extractOne("Email", headers);
-        assert(emailScore >= 70); # assert that slaves have email addresses
-        assert(np.sum(headers == u"Email") <= 1);
-        emailCol = headers.index(emailCol);
-        headers[emailCol] = "Email";
-        groupCol, groupScore = process.extractOne("Group", headers);
-        if(groupScore < 70):
-            # no groups
-            print("Out of design scope");
-            return None;
-        else:
-            assert(np.sum(headers == u"Group") <= 1);
-            groupCol = headers.index(groupCol);
-            headers[groupCol] = "Group";
-            df.columns = headers;
-            assert(len(df[u"Email"].unique()) == len(df)); # assert emails are unique
-            # to do: use email & name as combination key
-            return df;
+        for eh in expectedHeaders:
+            fuzzyH, scoreH = process.extractOne(eh, headers);
+            assert(scoreH >= 70);
+            assert(np.sum(headers == eh) <= 1); # unique
+            hCol = headers.index(fuzzyH);
+            headers[hCol] = eh;
 
-""" To do: get chores from eg a to do list on Google Docs """
-def getChores(csvFilename):
-    try:
-        rawFile = codecs.open(csvFilename, encoding='utf-8', mode='r');
-    except IOError:
-        print("Failed to open {0}".format(csvFilename));
-        return None
-    else:
-        hasHeaders = csv.Sniffer().has_header(rawFile.readline());
-        assert(hasHeaders == True);
-        rawFile.seek(0);
-        df = pandas.read_csv(rawFile);
-        rawFile.close();
-        
-        headers = df.columns;
-        if headers is None:
-            print("Out of design scope for the moment");
-            return None;
-        headers = list(headers);
-        assert(len(headers) >= 2); # item and applicability
-
-        choreCol, choreScore = process.extractOne("Chore", headers);
-        assert(choreScore >= 70);
-        assert(np.sum(headers == u"Chore") <= 1);
-        choreCol = headers.index(choreCol);
-        headers[choreCol] = "Chore";
-
-        groupCol, groupScore = process.extractOne("Group", headers);
-        if(groupScore < 70):
-            # no groups
-            print("Out of design scope");
-            return None;
-        else:
-            assert(np.sum(headers == u"Group") <= 1);
-            groupCol = headers.index(groupCol);
-            headers[groupCol] = "Group";
-            df.columns = headers;
-            return df; 
+        df.columns = headers;
+        return df;
 
 """ Get the master from a JSON file """
 def gatherMaster(masterFilename):
@@ -200,34 +147,6 @@ def gatherMaster(masterFilename):
         assert(u"randomApiKey" in masterSettings);
         assert(u"master email" in masterSettings);
         return masterSettings;
-
-""" Read a log file (CSV format) that records the labours of the slaves """
-def readHistory(historyFile=None):
-    if historyFile is None:
-        return None;
-    try:
-        rawFile = codecs.open(csvFilename, encoding='utf-8', mode='r');
-    except IOError:
-        print("Failed to open {0}".format(csvFilename));
-        return None; # no history
-    else:
-        # this program writes history, so we can assume history is consistent
-        # with how we would want it written
-        # date, email, group, task
-        # doing tasks for one group doesn't curry favour with other groups
-        df = pandas.read_csv(rawFile);
-        rawFile.close();
-        headers = df.columns;
-        assert(headers is not None and len(headers) >= 4);
-
-        dateCol, dateScore = process.extractOne("Date",headers);
-        assert(dateScore >= 75); # dates are not actually needed in current design anyway
-        emailCol, emailScore = process.extractOne("Email",headers);
-        assert(emailScore >= 70);
-        groupCol, groupScore = process.extractOne("Group", headers);
-        assert(groupScore >= 70);
-        choreCol, choreScore = process.extractOne("Chore", headers);
-
 
 """ Connect to Google and pull all contacts from a group """
 def pullSlaves(master, groupName):
@@ -249,11 +168,11 @@ if __name__ == '__main__':
         required=False);
 
     args = parser.parse_args();
-    history = readHistory(args.past);
-    slaves = gatherSlaves(args.slaves);
+    history = fuzzyRead(args.past, [u"Date", u"Email", u"Chore", u"Group"]);
+    slaves = fuzzyRead(args.slaves, [u"Name", u"Email", u"Group"]);
     if(args.verbose):
         print("slaves",slaves);
-    choreList = getChores(args.chores);
+    choreList = fuzzyRead(args.chores, [u"Chore", u"Group"]); # to do: get chores from eg a to do list on Google Docs
     if(args.verbose):
         print("chores",choreList);
     newChores, randomBlock = allocateChores(history, choreList, slaves);
