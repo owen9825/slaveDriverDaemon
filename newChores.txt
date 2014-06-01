@@ -1,0 +1,13 @@
+Fabio's chores for the week: cleaning bathroom sink upstairs; cleaning upstairs shower, raised tiles, wall tiles & shower curtain
+Haden's chores for the week: cleaning downstairs shower, shower walls and shower door; sweeping and mopping downstairs bathroom
+Jon's chores for the week: sweeping and mopping floor downstairs; cleaning the back deck once between Friday and Sunday (inclusive)
+Lorraine's chores for the week: cleaning upstairs toilet; cleaning the back deck once before Thursday
+Ryan's chores for the week: cleaning bathroom sink downstairs; buying bathroom items to last the week (bleach, toilet paper (minimum 2-ply))
+Mauro's chores for the week: buying bathroom items to last the week (bleach, toilet paper (minimum 2-ply)); sweeping and mopping upstairs bathroom
+Nina's chores for the week: sweeping and mopping upstairs kitchen; buying kitchen items to last the week (glad wrap, Aluminium foil, detergent, paper towel)
+Sean's chores for the week: emptying recycling bin downstairs on Sunday
+Shane's chores for the week: sweeping and mopping downstairs kitchen; buying kitchen items to last the week (garbage bags, glad wrap, Aluminium foil, detergent, paper towel)
+Shima's chores for the week: cleaning downstairs toilet; emptying downstairs kitchen garbage bin for the week
+Owen's chores for the week: emptying recycling bin upstairs on Sunday; emptying upstairs kitchen garbage bin for the week
+The random values used were:
+[0.8645057441456977, 0.14752102346655638, 0.20936684961032459, 0.098793216605289169, 0.95205877547970208, 0.64376632127805555, 0.86098277787946931, 0.48507962629474177, 0.55510221926409764, 0.58492898572963303, 0.34174501806775837, 0.47844810947286243, 0.80308924456016906, 0.16378361868201474, 0.97686672561016441, 0.902123359404574, 0.97375794152959971, 0.67345946684554858, 0.31251539497346714, 0.54498099525056043, 0.29578281104042525]

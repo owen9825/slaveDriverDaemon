@@ -47,13 +47,17 @@ def allocateChores(history, chores, slaves):
         # now assign chores for that caste. These slaves will still be eligible for everyoneChores later
         casteKeys = slaves.index[slaves[u"Group"] == caste]; # used for access
         for c in chores.index[chores[u"Group"] == caste]:
-            straw = randomBlock[b] * castePotentials[caste];
+            straw = randomBlock[b] * castePotentials[caste]; # short straw
             # iterate over caste members until the straw position
             cumulation = 0; # Python doesn't allow "Σ = 0;"
             for slaveKey in casteKeys:
                 cumulation += slaves.ix[slaveKey, u"U"];
                 if cumulation >= straw:
-                    slaves.ix[slaveKey, u"U"] -= 1;
+                    try:
+                        slaves.ix[slaveKey, u"U"] -= 1;
+                    except ValueError:
+                        print("There was a problem using the key to access user {0}".format(u));
+                        return None;
                     slaves.ix[slaveKey, u"Chores"] += chores.ix[c,u"Chore"] + "; ";
                     break;
             b += 1; # position in random block
@@ -168,7 +172,10 @@ if __name__ == '__main__':
         required=False);
 
     args = parser.parse_args();
-    history = fuzzyRead(args.past, [u"Date", u"Email", u"Chore", u"Group"]);
+    if(args.past is not None):
+        history = fuzzyRead(args.past, [u"Date", u"Email", u"Chore", u"Group"]);
+    else:
+        history = None;
     slaves = fuzzyRead(args.slaves, [u"Name", u"Email", u"Group"]);
     if(args.verbose):
         print("slaves",slaves);
