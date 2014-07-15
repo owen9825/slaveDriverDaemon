@@ -95,7 +95,7 @@ def sendChores(chores, master, randomBlock):
         for c in chores.index:
             ownershipName = chores.ix[c,u"Name"];
             if(ownershipName[-1] == u"s"):
-                ownershapName += "'";
+                ownershipName += "'";
             else:
                 ownershipName += "'s";
             slaveChores = chores.ix[c,u"Chores"];
@@ -108,8 +108,6 @@ def sendChores(chores, master, randomBlock):
         outFile.close();
     # to do: send the email
 
-# to do: merge gatherSlaves and getChores into the same function with an input list
-# of expected columns and unique columns
 """ Read a csv that's at least similar to expected """
 def fuzzyRead(csvFilename, expectedHeaders):
     try:
@@ -165,7 +163,7 @@ if __name__ == '__main__':
     parser.add_argument("-slaves", help="CSV file that records names, groups and email addresses"\
         " of the slaves.", type=str, required=True);
     parser.add_argument("-master", help="JSON file with settings for the master. This is used as "\
-        "the sender's email address etc.", type=str, required=True);
+        "the sender's email address etc.", type=str, required=False);
     parser.add_argument("-chores", help="CSV file with list of chores and group "\
         "applicability", type=str, required=True);
     parser.add_argument("-v","--verbose", help="Print more comments", action='store_true',
@@ -183,7 +181,8 @@ if __name__ == '__main__':
     if(args.verbose):
         print("chores",choreList);
     newChores, randomBlock = allocateChores(history, choreList, slaves);
-    master = gatherMaster(args.master);
-    if(args.verbose):
-        print("master settings",master);
-    sendChores(newChores, master, randomBlock);
+    if(args.master is not None):
+        master = gatherMaster(args.master);
+        if(args.verbose):
+            print("master settings",master);
+        sendChores(newChores, master, randomBlock);
