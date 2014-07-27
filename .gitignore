@@ -222,5 +222,8 @@ slaves.csv
 appPassword*
 log.txt
 master.csv
+master.json
 past.csv
+choreList.csv
+lottery/items.json
 *.png
