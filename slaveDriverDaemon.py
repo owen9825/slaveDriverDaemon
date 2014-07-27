@@ -10,13 +10,9 @@ import json
 import numpy as np
 import math
 
-def allocateChores(history, chores, slaves):
-    pass;
-    # try to balance the variety of tasks between weeks, then also handle some kind of start date so that there isn't a bias for overloading new slaves
-    # try to balance the distribution of tasks this week and overall
-        
+def allocateChores(history, chores, slaves):      
     # the Group column of chores can be All
-    assert(u"U" not in slaves.columns); # to do: accomodate bias from previous weeks so eg slaves will floor() instead of ceil()
+    assert(u"U" not in slaves.columns); # to do: accommodate bias from previous weeks
     # U as in potential energy
     slaves[u"U"] = 1;
     castes = slaves[u"Group"].unique();
@@ -27,11 +23,23 @@ def allocateChores(history, chores, slaves):
     assert(u"Chores" not in slaves); # to do: handle situation where some tasks have been pre-allocated
     slaves[u"Chores"] = "; "; # make it easy to strip later
 
-    randomBlock = np.random.random_sample(size=len(chores));
-    # to do: scrape Lotto results to prove that this program wasn't run repeatedly until a
-    # beneficial result for the master was generated
-    b = 0; # place in block
-
+    # separate function for getting the random numbers?
+    try:
+        rawFile = codecs.open("lottery/items.json", encoding='utf-8', mode='r');
+    except IOError:
+        print("Failed to open {0}".format(masterFilename));
+        randomBlock = np.random.random_sample(size=len(chores));
+        randomBlock *= 40; # typical maximum lottery number
+    else:
+        # Lotto results have been scraped to prove that this program wasn't 
+        # run repeatedly until a beneficial result was generated (presumably for the master)
+        lottoResults = json.load(rawFile,encoding='utf-8');
+        randomBlock = [];
+        for line in lottoResults:
+            randomBlock.append(int(line["winningNum"][0]));
+        rawFile.close;
+    
+    b = 0; # place in block of random numbers
     slaves.set_index(u"Email", inplace=True); # allow this to be used as a key
 
     for caste in castes:
@@ -46,8 +54,10 @@ def allocateChores(history, chores, slaves):
         castePotentials[caste] = castePopulation * casteEffort;
         # now assign chores for that caste. These slaves will still be eligible for everyoneChores later
         casteKeys = slaves.index[slaves[u"Group"] == caste]; # used for access
+        lastChore = 0; # when iterating, start from last pos to reduce bias of slave order
         for c in chores.index[chores[u"Group"] == caste]:
-            straw = randomBlock[b] * castePotentials[caste]; # short straw
+            straw = (randomBlock[b] + lastChore) % castePotentials[caste];
+            lastChore = straw; # inadvertently incremented as the slave's potential is reduced
             # iterate over caste members until the straw position
             cumulation = 0; # Python doesn't allow "Σ = 0;"
             for slaveKey in casteKeys:
@@ -61,12 +71,15 @@ def allocateChores(history, chores, slaves):
                     slaves.ix[slaveKey, u"Chores"] += chores.ix[c,u"Chore"] + "; ";
                     break;
             b += 1; # position in random block
+            assert(len(randomBlock) > b); # sufficient quantity of random numbers
             castePotentials[caste] -= 1;
     # now assign everyone tasks
-    allPotential = np.sum(castePotentials.values());
+    allPotential = sum(castePotentials.values());
     slaveKeys = slaves.index;
+    lastChore = 0;
     for c in chores.index[chores[u"Group"] == u"All"]:
-        straw = randomBlock[b] * allPotential;
+        straw = (randomBlock[b] + lastChore) % int(allPotential);
+        lastChore = straw;
         # iterate over caste members until the straw position
         cumulation = 0;
         for slaveKey in slaveKeys:
@@ -76,9 +89,11 @@ def allocateChores(history, chores, slaves):
                 slaves.ix[slaveKey, u"Chores"] += chores.ix[c,u"Chore"] + "; ";
                 break;
         b += 1;
+        assert(len(randomBlock) > b); # sufficient quantity of random numbers
         allPotential -= 1;
 
-    print("Slaves could've been pushed for another {0} tasks.".format(allPotential));
+    randomBlock = randomBlock[0:b]; # this is to avoid printing unused random numbers
+    print("Slaves could've been pushed for another {0} tasks for more fairness.".format(allPotential));
 
     # return to state
     slaves.reset_index(inplace=True);
@@ -177,7 +192,7 @@ if __name__ == '__main__':
     slaves = fuzzyRead(args.slaves, [u"Name", u"Email", u"Group"]);
     if(args.verbose):
         print("slaves",slaves);
-    choreList = fuzzyRead(args.chores, [u"Chore", u"Group"]); # to do: get chores from eg a to do list on Google Docs
+    choreList = fuzzyRead(args.chores, [u"Chore", u"Group"]); # to do: get chores from eg a to-do list on Google Docs
     if(args.verbose):
         print("chores",choreList);
     newChores, randomBlock = allocateChores(history, choreList, slaves);
@@ -185,4 +200,6 @@ if __name__ == '__main__':
         master = gatherMaster(args.master);
         if(args.verbose):
             print("master settings",master);
-        sendChores(newChores, master, randomBlock);
+    else:
+        master = None;
+    sendChores(newChores, master, randomBlock);
