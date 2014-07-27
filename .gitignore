@@ -226,4 +226,5 @@ master.json
 past.csv
 choreList.csv
 lottery/items.json
+newChores.txt
 *.png
