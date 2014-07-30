@@ -56,7 +56,7 @@ def allocateChores(history, chores, slaves):
         casteKeys = slaves.index[slaves[u"Group"] == caste]; # used for access
         lastChore = 0; # when iterating, start from last pos to reduce bias of slave order
         for c in chores.index[chores[u"Group"] == caste]:
-            straw = (randomBlock[b] + lastChore) % castePotentials[caste];
+            straw = ((randomBlock[b] + lastChore) % castePotentials[caste]) + 1;
             lastChore = straw; # inadvertently incremented as the slave's potential is reduced
             # iterate over caste members until the straw position
             cumulation = 0; # Python doesn't allow "Σ = 0;"
