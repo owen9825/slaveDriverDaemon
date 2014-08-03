@@ -42,6 +42,7 @@ def allocateChores(history, chores, slaves):
     b = 0; # place in block of random numbers
     slaves.set_index(u"Email", inplace=True); # allow this to be used as a key
 
+    lastChore = 0; # when iterating, start from last pos to reduce bias of slave order
     for caste in castes:
         assert(caste != u"All"); # reserved word
         castePopulation = float(np.sum(slaves[u"Group"] == caste));
@@ -54,7 +55,6 @@ def allocateChores(history, chores, slaves):
         castePotentials[caste] = castePopulation * casteEffort;
         # now assign chores for that caste. These slaves will still be eligible for everyoneChores later
         casteKeys = slaves.index[slaves[u"Group"] == caste]; # used for access
-        lastChore = 0; # when iterating, start from last pos to reduce bias of slave order
         for c in chores.index[chores[u"Group"] == caste]:
             straw = ((randomBlock[b] + lastChore) % castePotentials[caste]) + 1;
             lastChore = straw; # inadvertently incremented as the slave's potential is reduced
@@ -76,7 +76,6 @@ def allocateChores(history, chores, slaves):
     # now assign everyone tasks
     allPotential = sum(castePotentials.values());
     slaveKeys = slaves.index;
-    lastChore = 0;
     for c in chores.index[chores[u"Group"] == u"All"]:
         straw = ((randomBlock[b] + lastChore) % int(allPotential)) + 1;
         lastChore = straw;
