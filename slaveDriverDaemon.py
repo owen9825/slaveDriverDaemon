@@ -78,7 +78,7 @@ def allocateChores(history, chores, slaves):
     slaveKeys = slaves.index;
     lastChore = 0;
     for c in chores.index[chores[u"Group"] == u"All"]:
-        straw = (randomBlock[b] + lastChore) % int(allPotential);
+        straw = ((randomBlock[b] + lastChore) % int(allPotential)) + 1;
         lastChore = straw;
         # iterate over caste members until the straw position
         cumulation = 0;
