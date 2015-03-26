@@ -5,3 +5,5 @@ Allocates chores reasonably fairly and sends emails. I recommend forking this pr
 
 To do:
 · Send emails.
+
+The command-line help explains the format of the files for slaves and chores. The concept of a group is that some slaves might be eg upstairs and can therefore only be assigned tasks marked as "upstairs" or "all", otherwise they'll revolt.
